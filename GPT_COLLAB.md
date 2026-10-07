@@ -2,6 +2,8 @@
 
 面向仓库维护者（水如天）与编码 Agent（GPT、Codex、Claude Code 等）。
 
+> Claude↔Grok：实现与测试走本文件；把「超级助理是什么」交给 Grok 时，整段复制 [`GROK_COLLAB.md`](GROK_COLLAB.md) 里的提示词。
+
 ---
 
 ## 1. 角色
@@ -11,6 +13,7 @@
 | 维护者 | 定优先级、提供真实账号/导出、合并 PR、隐私拍板 |
 | 编码 Agent | 按里程碑改代码与文档；写测试；诚实报告阻塞 |
 | 调研 Agent | 更新 `docs/research/*`；不夸大 stars 与可用性 |
+| Grok CLI | 产品定义、验收标准、审偏离主线、中文说明；提示词见 [`GROK_COLLAB.md`](GROK_COLLAB.md) |
 
 ---
 

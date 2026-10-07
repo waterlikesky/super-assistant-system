@@ -2,7 +2,7 @@
 
 > 目标：打通微信 / 钉钉 / 邮件 / 短信等个人数据，本地优先记忆，越用越聪明。  
 > 现状：**研究 + 架构 + 实现骨架**（M0）。尚未实现真实渠道接入或记忆闭环——请勿夸大能力。  
-> 协作：与 GPT / Codex 按 `GPT_COLLAB.md` + `IMPLEMENTATION_PLAN.md` 分阶段推进。
+> 协作：与 GPT / Codex / Claude 按 `GPT_COLLAB.md` + `IMPLEMENTATION_PLAN.md` 分阶段推进；Grok CLI 入口见 `GROK_COLLAB.md`（Claude↔Grok）。
 
 仓库：https://github.com/waterlikesky/super-assistant-system
 
@@ -68,13 +68,17 @@ Agent 编排（问答 / 摘要 / 提醒；出站默认关）
 
 ---
 
-## 5. 与 GPT 协作方式
+## 5. 与 GPT / Claude / Grok 协作方式
 
-见 [`GPT_COLLAB.md`](GPT_COLLAB.md)。原则：
+- 编码 Agent（GPT / Codex / Claude）：[`GPT_COLLAB.md`](GPT_COLLAB.md)
+- Grok CLI（产品定义、验收、审偏离）：[`GROK_COLLAB.md`](GROK_COLLAB.md) — 内含可整段粘贴的提示词
+
+原则：
 
 - 一次一个里程碑 / PR；验收标准写在计划里
 - 诚实归因：不伪造「已跑通 Claude / 已接入微信」
 - 密钥与原始聊天永不进仓库
+- Claude↔Grok：实现归 Claude；「超级助理是什么」与验收文案归 Grok
 
 ---
 
