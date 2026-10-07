@@ -1,0 +1,15 @@
+{
+  "id": "sms:demo-002",
+  "channel": "sms",
+  "direction": "inbound",
+  "timestamp": "2026-10-06T18:02:00-07:00",
+  "participants": [
+    { "role": "from", "handle": "+86139****0000", "display_name": "Bank" }
+  ],
+  "thread_id": "sms-bank",
+  "content_text": "验证码 948211，5分钟内有效。请勿告知他人。",
+  "sensitivity": "confidential",
+  "consent_tag": "demo-consent-2026-10",
+  "raw_ref": null,
+  "metadata": { "kind": "otp" }
+}

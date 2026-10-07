@@ -1,0 +1,16 @@
+{
+  "id": "wechat:demo-003",
+  "channel": "wechat",
+  "direction": "inbound",
+  "timestamp": "2026-10-05T21:40:00-07:00",
+  "participants": [
+    { "role": "from", "handle": "wxid_demo_peer", "display_name": "老王" },
+    { "role": "self", "handle": "wxid_demo_self", "display_name": "我" }
+  ],
+  "thread_id": "wechat-dm-laowang",
+  "content_text": "项目下周一切一，合同我发你邮箱。别把群里聊天原样丢给网上的 AI。",
+  "sensitivity": "personal",
+  "consent_tag": "demo-consent-2026-10",
+  "raw_ref": null,
+  "metadata": { "note": "fixture only; wechat connector disabled by default" }
+}

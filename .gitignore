@@ -1,0 +1,36 @@
+# Secrets & local data (NEVER commit)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+credentials/
+secrets/
+data/raw/
+data/private/
+*.db
+*.sqlite
+*.sqlite3
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+dist/
+*.egg-info/
+
+# Node / misc
+node_modules/
+.DS_Store
+.idea/
+.vscode/
+*.log
+
+# Vector / embedding caches
+.chroma/
+.lancedb/
+*.index

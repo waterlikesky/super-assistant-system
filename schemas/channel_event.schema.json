@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/waterlikesky/super-assistant-system/schemas/channel_event.schema.json",
+  "title": "ChannelEvent",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "channel",
+    "direction",
+    "timestamp",
+    "content_text",
+    "sensitivity",
+    "consent_tag"
+  ],
+  "properties": {
+    "id": { "type": "string", "minLength": 1 },
+    "channel": {
+      "type": "string",
+      "enum": ["email", "wechat", "dingtalk", "sms", "feishu", "file", "other"]
+    },
+    "direction": { "type": "string", "enum": ["inbound", "outbound"] },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "participants": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["role", "handle"],
+        "properties": {
+          "role": { "type": "string", "enum": ["from", "to", "cc", "self", "other"] },
+          "handle": { "type": "string", "description": "Already redacted or hashed handle" },
+          "display_name": { "type": "string" }
+        }
+      }
+    },
+    "thread_id": { "type": ["string", "null"] },
+    "content_text": { "type": "string" },
+    "sensitivity": {
+      "type": "string",
+      "enum": ["public", "personal", "confidential"]
+    },
+    "consent_tag": { "type": "string", "minLength": 1 },
+    "raw_ref": {
+      "type": ["string", "null"],
+      "description": "Local-only pointer; never upload raw by default"
+    },
+    "metadata": { "type": "object" }
+  }
+}
