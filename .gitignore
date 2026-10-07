@@ -8,6 +8,7 @@ credentials/
 secrets/
 data/raw/
 data/private/
+data/processed/
 *.db
 *.sqlite
 *.sqlite3

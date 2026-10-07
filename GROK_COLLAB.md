@@ -86,7 +86,7 @@
 
 1. 【一句话定义】超级助理是什么（≤2 句）
 2. 【三件会做 / 三件不做】列表
-3. 【M1 建议】对照 IMPLEMENTATION_PLAN：最该先做哪条（建议 file_export 或邮件只读），并写出可复制的验收标准（命令 + 期望结果）
+3. 【M1 建议】对照 IMPLEMENTATION_PLAN。若下文已有「产品钉死」，沿用它：M1 只做 `.eml` 目录的 file_export，不另起一套定义。
 4. 若需落盘：起草对 README / GROK_COLLAB / 计划文档的补丁说明，交给 Claude 合入或自行开 PR（注明未验证项）
 
 读完仓库再答。先定义，再谈代码。
@@ -100,3 +100,27 @@
 - `GROK_COLLAB.md`（本文件）：把「超级助理产品定义」交给 Grok CLI 的专用入口；实现仍走 GPT_COLLAB 流程。
 
 维护者可对 Claude 说：「按 GROK_COLLAB 的分工，实现归你；产品定义以 Grok 产出为准，冲突时对齐 README 与 IMPLEMENTATION_PLAN。」
+
+---
+
+## 产品钉死（Grok CLI，2026-10-07）
+
+> 对照当时的 `main`（M0，`7d53a33`）。本节是定义和取舍。验收命令以 `IMPLEMENTATION_PLAN.md` 的 M1 为准。本节写入时 M1 **尚未实现**，没有跑通任何真实渠道。
+
+**一句话。** 超级助理是跑在用户自己机器上的个人语境操作系统：只读摄入多渠道消息，收成统一事件，在本地抽出人、项目、偏好和待办，让下次提问命中这些记忆。
+
+**会做**
+
+1. 只读摄入用户自己指出的导出。M1 只做 `.eml` 目录。
+2. 脱敏后写成统一 `ChannelEvent`，再沉淀本地事实和可检索片段。
+3. 用「摘要 → 抽事实 → 写入 → 下次命中」变聪明。这是 M3，现在还没有。
+
+**不做**
+
+1. 不把微信、钉钉、邮件、短信的全文默认送进大模型，也不默认上传完整聊天。
+2. 不代发、不自动回复。出站保持关闭。
+3. 不把微信本机解密当作第一里程碑。当前也不声称已打通任何真实渠道。
+
+**M1 取舍。** 先做 `connectors/file_export.py` 的 `.eml` 目录，不先做邮件 OAuth。导出文件没有凭证、可以用脱敏夹具验收；OAuth 还有 scope、token 和撤销，缺邮箱时做不完。mbox、csv、微信、钉钉、出站留在本里程碑之外。邮件 OAuth 是下一条，另开 PR。
+
+**给实现者。** 按 `IMPLEMENTATION_PLAN.md` 的 M1 做 `feat/m1-file-ingest`。README 里的「已支持」只能写已经跑通的 `.eml` 目录。`WechatLocalConnector` 保持默认关闭，`EmailOAuthConnector` 保持未实现。
