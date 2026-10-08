@@ -100,8 +100,10 @@ class Answer:
 
 
 class Assistant:
-    def __init__(self, store: Store, memory: CompositeMemory, *, now: datetime | None = None, reply_window_days: int = 7) -> None:
+    def __init__(self, store: Store, memory: CompositeMemory, *, now: datetime | None = None,
+                 reply_window_days: int = 7, vectors=None) -> None:
         self.store = store
+        self.vectors = vectors
         self.memory = memory
         self.now = now or datetime.now(timezone.utc)
         self.reply_window_days = reply_window_days
@@ -257,6 +259,9 @@ class Assistant:
 
         if terms and not (hit & {"reply", "promise", "todo"}):
             rows = self.store.search(terms, person=person if self.is_person(person or "") else None, limit=6)
+            if self.vectors is not None:
+                seen = {r["id"] for r in rows}
+                rows += [r for r in self.vectors.search(question, k=4) if r["id"] not in seen]
             if rows:
                 ans.add("相关消息", [f"{fmt_time(r, True)} {r['sender']}@{r['conversation']}：{short(r['content_text'], 80)} {ans.cite(r)}" for r in rows])
             mems = [m for m in self.memory.search(" ".join(terms), now=self.now) if m.status != "done"]

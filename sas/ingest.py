@@ -30,6 +30,7 @@ class IngestReport:
     memories: int = 0
     closed: int = 0
     people: int = 0
+    embedded: int = 0
     by_connector: Counter = field(default_factory=Counter)
     skipped: list[tuple[str, str]] = field(default_factory=list)
     unrecognized: list[str] = field(default_factory=list)
@@ -62,6 +63,7 @@ def ingest_path(
     recursive: bool = False,
     consent_tag: str | None = None,
     force: bool = False,
+    vectors=None,
 ) -> IngestReport:
     root = Path(path)
     if not root.exists():
@@ -100,6 +102,8 @@ def ingest_path(
         report.duplicate += len(rows) - len(fresh)
         report.by_connector[connector.name] += len(fresh)
         new_rows += fresh
+        if vectors is not None and fresh:
+            report.embedded += vectors.add(fresh)
         store.record_source(file, sha, connector.name, len(rows))
 
     learn(new_rows, store=store, memory=memory, report=report)

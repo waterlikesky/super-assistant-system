@@ -36,6 +36,8 @@ class Config:
     # 出站：没有实现，置为 true 会被 check() 拒绝
     outbound_enabled: bool = False
     memory_backend: str = "local"  # local | mem0
+    # 语义检索（可选）：simonw/llm 的 embedding 模型名，空 = 关闭
+    embed_model: str = ""
     reply_window_days: int = 7
     extra: dict = field(default_factory=dict)
 

@@ -14,6 +14,7 @@ from sas.assistant import CHANNEL_LABEL, Assistant, fmt_time, item_line, short
 from sas.config import Config, ConfigError
 from sas.connectors import REGISTRY
 from sas.digest import build_digest, digest_snippets
+from sas.embed import get_vector_index
 from sas.ingest import ingest_path
 from sas.llm import LLMUnavailable, answer_with_llm, get_llm
 from sas.memory import get_backend
@@ -70,7 +71,10 @@ def _open(args) -> tuple[Config, Store, Assistant]:
     config = Config.load(args.config, **overrides)
     store = Store(config.db_path)
     memory = get_backend(config, store)
-    return config, store, Assistant(store, memory, reply_window_days=config.reply_window_days)
+    vectors, note = get_vector_index(config, store)
+    if config.embed_model and vectors is None:
+        print(f"[info] 语义检索未启用：{note}", file=sys.stderr)
+    return config, store, Assistant(store, memory, reply_window_days=config.reply_window_days, vectors=vectors)
 
 
 def cmd_ingest(args, config: Config, store: Store, a: Assistant) -> int:
@@ -78,7 +82,8 @@ def cmd_ingest(args, config: Config, store: Store, a: Assistant) -> int:
     for path in args.paths:
         try:
             r = ingest_path(path, store=store, memory=a.memory, config=config, source=args.source,
-                            recursive=args.recursive, consent_tag=args.consent_tag, force=args.force)
+                            recursive=args.recursive, consent_tag=args.consent_tag, force=args.force,
+                            vectors=a.vectors)
         except (FileNotFoundError, KeyError) as exc:
             print(f"错误：{exc}", file=sys.stderr)
             return 1
@@ -234,6 +239,7 @@ def cmd_stats(args, config: Config, store, a: Assistant) -> int:
         "allow_cloud_llm": config.allow_cloud_llm,
         "outbound": "disabled（无发送实现）",
         "memory_backend": a.memory.name,
+        "semantic_search": get_vector_index(config, store)[1] if a.vectors is None else "已启用",
     }
     if args.json:
         print(json.dumps(s, ensure_ascii=False, indent=2))
@@ -246,6 +252,7 @@ def cmd_stats(args, config: Config, store, a: Assistant) -> int:
     print("记忆：" + ("，".join(f"{k} {v}" for k, v in sorted(s["memories"].items())) or "-"))
     pv = s["privacy"]
     print(f"隐私：LLM={pv['llm_backend']} ｜ 云模型={'允许(仅脱敏片段)' if pv['allow_cloud_llm'] else '禁止'} ｜ 出站={pv['outbound']} ｜ 记忆后端={pv['memory_backend']}")
+    print(f"语义检索：{pv['semantic_search']}")
     return 0
 
 
