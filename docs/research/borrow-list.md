@@ -11,7 +11,9 @@
 | 浏览 UI（可选） | **依赖（可选）** | [simonw/datasette](https://github.com/simonw/datasette)（11.5k★，Apache-2.0） | 本地 `datasette sas.db` 直接浏览/搜索，不自己写前端 |
 | 向量检索（可选） | **依赖（可选）** | [asg017/sqlite-vec](https://github.com/asg017/sqlite-vec)（8.2k★，Apache-2.0） | 同一个 SQLite 文件里加向量，不引入独立向量库 |
 | LLM 后端（可选） | **依赖（可选）** | [simonw/llm](https://github.com/simonw/llm)（12.6k★，Apache-2.0）+ [ollama](https://github.com/ollama/ollama)（182k★，MIT） | 一个接口接本地 Ollama / 云模型 / embeddings；默认离线规则抽取 |
-| 长期记忆 / 事实抽取 | **适配器（可选后端）** | [mem0ai/mem0](https://github.com/mem0ai/mem0)（66.8k★，Apache-2.0，今天仍在 push；PyPI `mem0ai` 2.2.1） | 成熟的 ADD/UPDATE/DELETE 事实记忆；本仓库做 `MemoryBackend` 接口，默认本地 SQLite 规则版，`pip install .[mem0]` + Ollama 时切到 mem0 |
+| 长期记忆 / 上下文库 | **镜像适配器（主推）** | [volcengine/OpenViking](https://github.com/volcengine/OpenViking)（39.4k★，主项目 **AGPL-3.0**；`openviking-sdk` 轻量 HTTP 客户端） | `viking://` 文件系统 + L0/L1/L2 分层；记忆、画像、日报写成 Markdown 由它建摘要与向量。**只通过 HTTP 调用用户自托管的 server，不含其代码**。决策见 [ADR 0001](../adr/0001-memory-backend.md) |
+| 团队级记忆 Hub | **镜像适配器（可选）** | [TencentCloud/TencentDB-Agent-Memory](https://github.com/TencentCloud/TencentDB-Agent-Memory)（27.8k★，MIT） | L0→L3 分层 + BM25/向量/RRF；三服务 + Node ≥22.16 + LLM，偏团队；Python SDK 不在 PyPI，包内 v2/v3 并存，适配器只用 v3 |
+| 长期记忆 / 事实抽取 | **适配器（可选后端）** | [mem0ai/mem0](https://github.com/mem0ai/mem0)（66.8k★，Apache-2.0，今天仍在 push；PyPI `mem0ai` 2.2.1） | 成熟的 ADD/UPDATE/DELETE 事实记忆；保留为可选镜像，不再主推（默认配置走 OpenAI，记忆是黑盒事实列表） |
 | 用户画像记忆（参考） | 参考 | [memodb-io/memobase](https://github.com/memodb-io/memobase)（2.9k★，Apache-2.0） | profile 槽位（人/偏好/事件）设计参考 |
 | 时间知识图谱（后续） | 参考，M3 以后 | [getzep/graphiti](https://github.com/getzep/graphiti)（31.5k★，Apache-2.0）、[topoteretes/cognee](https://github.com/topoteretes/cognee)（31.6k★） | 「谁在什么时候说了什么」的时序关系；MVP 不引入 |
 | 自进化 agent 记忆架构 | 参考 | [NousResearch/hermes-agent](https://github.com/NousResearch/hermes-agent)（252k★，MIT）、[letta-ai/letta](https://github.com/letta-ai/letta)（25k★，Apache-2.0） | Hermes：会话 / 持久 / 技能三层记忆 + SQLite FTS5 按需检索；Letta：core vs archival memory。我们照这个分层 |
@@ -54,7 +56,7 @@
 
 1. 依赖 `sqlite-utils` 做存储与 FTS5；不手写 ORM / 迁移框架。
 2. 邮件用标准库 `mailbox` / `email`；不自己写 MIME 解析。
-3. 记忆层定义 `MemoryBackend` 接口：默认本地规则 + SQLite；可选 mem0 适配器（缺包时优雅降级）。
+3. 记忆层定义 `MemoryBackend` 接口：默认本地规则 + SQLite（永远是真源）；外部后端只做镜像增强——OpenViking（主推）、TDAM、mem0，缺包或 server 不可达时优雅降级（ADR 0001）。
 4. LLM 可选，经 `llm` 库或 Ollama HTTP；默认离线可用。
 5. 微信只吃 WeChatMsg / wechat-intelligence-hub / decrypt-skill 的导出物；不碰解密。
 6. 输出可落 Markdown（Obsidian 友好）与 `datasette` 可浏览的 `sas.db`。

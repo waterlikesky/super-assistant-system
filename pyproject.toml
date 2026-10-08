@@ -19,6 +19,10 @@ xlsx = ["openpyxl>=3.1"]
 llm = ["llm>=0.13"]
 vec = ["sqlite-vec>=0.1"]
 mem0 = ["mem0ai>=0.1"]
+# 记忆镜像（ADR 0001）。TDAM 的官方 SDK 不在 PyPI，需从官方仓库 sdk/memory-core/python 安装
+openviking = ["openviking-sdk>=0.1"]
+tdam = ["httpx>=0.24"]
+web = ["fastapi>=0.110", "uvicorn>=0.29"]
 dev = ["pytest>=8"]
 
 [project.scripts]

@@ -35,7 +35,17 @@ class Config:
     allow_cloud_llm: bool = False
     # 出站：没有实现，置为 true 会被 check() 拒绝
     outbound_enabled: bool = False
-    memory_backend: str = "local"  # local | mem0
+    # 记忆镜像：local（只用本地）| openviking | tdam | mem0，可逗号组合；本地 SQLite 永远是真源
+    memory_backend: str = "local"
+    # OpenViking（ADR 0001 主推）：API key 只从环境变量 OPENVIKING_API_KEY 读取
+    openviking_url: str = ""
+    openviking_root: str = "viking://resources/sas"
+    # server 用的模型：local（Ollama / 本地 GGUF）| cloud。cloud 需要 allow_cloud_llm
+    openviking_models: str = "cloud"
+    # TencentDB-Agent-Memory（可选）：API key 只从环境变量 TDAM_API_KEY 读取
+    tdam_url: str = ""
+    tdam_service_id: str = "default"
+    tdam_models: str = "cloud"
     # 语义检索（可选）：simonw/llm 的 embedding 模型名，空 = 关闭
     embed_model: str = ""
     reply_window_days: int = 7
@@ -56,6 +66,9 @@ class Config:
         value = name.strip()
         return value in self.me or value.lower() in {m.lower() for m in self.me_emails}
 
+    def memory_backends(self) -> list[str]:
+        return [b.strip() for b in self.memory_backend.split(",") if b.strip()] or ["local"]
+
     def check(self) -> "Config":
         from sas.privacy import PrivacyError
 
@@ -63,8 +76,12 @@ class Config:
             raise PrivacyError("出站（自动回复/代发）没有实现，也不允许开启：请把 outbound_enabled 设回 false")
         if self.llm_backend not in {"none", "ollama", "llm"}:
             raise ConfigError(f"未知 llm_backend: {self.llm_backend}")
-        if self.memory_backend not in {"local", "mem0"}:
-            raise ConfigError(f"未知 memory_backend: {self.memory_backend}")
+        unknown = set(self.memory_backends()) - {"local", "openviking", "tdam", "mem0"}
+        if unknown:
+            raise ConfigError(f"未知 memory_backend: {', '.join(sorted(unknown))}")
+        for name in ("openviking_models", "tdam_models"):
+            if getattr(self, name) not in {"local", "cloud"}:
+                raise ConfigError(f"{name} 只能是 local 或 cloud")
         return self
 
     @classmethod
@@ -86,6 +103,10 @@ class Config:
             key = f"SAS_{f.name.upper()}"
             if key in env:
                 values[f.name] = env[key]
+        # 与官方 SDK 一致的环境变量名也认
+        for field_name, alias in (("openviking_url", "OPENVIKING_URL"), ("tdam_url", "TDAM_URL")):
+            if alias in env and field_name not in values:
+                values[field_name] = env[alias]
         values.update({k: v for k, v in overrides.items() if v is not None})
         return cls._from_values(values).check()
 

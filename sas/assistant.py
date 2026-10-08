@@ -50,7 +50,7 @@ def reply_label(row: dict) -> str:
 
 def item_line(item: MemoryItem, *, with_id: bool = True) -> str:
     who = item.subject if not item.counterpart or item.kind in {"preference", "fact"} else f"{item.subject} → {item.counterpart}"
-    bits = [f"[{item.label}] {who}：{item.text}"]
+    bits = [f"[{item.label}] {who}：{item.text}" if who else f"[{item.label}] {item.text}"]
     meta = []
     if item.due:
         meta.append(f"截止 {item.due}")
@@ -62,7 +62,9 @@ def item_line(item: MemoryItem, *, with_id: bool = True) -> str:
         meta.append("已完成")
     if meta:
         bits.append(f"（{'，'.join(meta)}）")
-    if with_id and item.id:
+    if item.source != "local":
+        bits.append(f"（来自 {item.source}）")
+    elif with_id and item.id:
         bits.append(f" #{item.id}")
     return "".join(bits)
 
@@ -273,7 +275,9 @@ class Assistant:
                 ans.add("相关消息", [f"{fmt_time(r, True)} {r['sender']}@{r['conversation']}：{short(r['content_text'], 80)} {ans.cite(r)}" for r in rows])
             mems = [m for m in self.memory.search(" ".join(terms), now=self.now) if m.status != "done"]
             if mems and not (hit & {"pref", "plan"}):
-                ans.add("相关记忆", [item_line(m) for m in mems[:5]])
+                local = [m for m in mems if m.source == "local"][:5]
+                remote = [m for m in mems if m.source != "local"][:3]
+                ans.add("相关记忆", [item_line(m) for m in local + remote])
         return ans
 
     def _todo_line(self, item: MemoryItem, ans: Answer) -> str:

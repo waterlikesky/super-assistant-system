@@ -14,10 +14,7 @@ from sas.config import Config
 from sas.privacy import is_local_url, prepare_for_model
 
 from .base import MemoryBackend, MemoryItem
-
-
-class BackendUnavailable(RuntimeError):
-    pass
+from .mirror import BackendUnavailable
 
 
 def _is_local_config(cfg: dict) -> bool:
@@ -62,7 +59,7 @@ class Mem0Memory(MemoryBackend):
             meta = h.get("metadata") or {}
             out.append(
                 MemoryItem(kind=meta.get("kind", "fact"), subject=meta.get("subject", ""), text=h.get("memory", ""),
-                           confidence=float(h.get("score") or 0.5), id=str(h.get("id", "")))
+                           confidence=float(h.get("score") or 0.5), id=str(h.get("id", "")), source=self.name)
             )
         return out
 

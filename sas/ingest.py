@@ -31,6 +31,7 @@ class IngestReport:
     closed: int = 0
     people: int = 0
     embedded: int = 0
+    mirrored: int = 0
     by_connector: Counter = field(default_factory=Counter)
     skipped: list[tuple[str, str]] = field(default_factory=list)
     unrecognized: list[str] = field(default_factory=list)
@@ -118,3 +119,8 @@ def learn(rows: list[dict], *, store: Store, memory: CompositeMemory, report: In
         report.closed += len(memory.observe_closure(ev))
         report.memories += memory.write(extract(ev))
     report.people += update_people(store, rows)
+    if memory.mirrors and rows:
+        new_ids = {r["id"] for r in rows}
+        changed = [i for i in memory.primary.list() if new_ids & set(i.source_event_ids)]
+        names = {r["sender"] for r in rows} | {i.subject for i in changed} | {i.counterpart for i in changed}
+        report.mirrored = sum(memory.sync(store, names=names, items=changed).values())

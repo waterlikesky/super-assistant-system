@@ -63,6 +63,7 @@ def build_parser() -> argparse.ArgumentParser:
     s = sub.add_parser("stats", help="数据与隐私开关概览")
     s.add_argument("--json", action="store_true")
     sub.add_parser("connectors", help="列出支持的导出格式")
+    sub.add_parser("sync", help="把本地记忆与人物画像全量推到已配置的记忆镜像（OpenViking / TDAM / mem0）")
     return p
 
 
@@ -96,6 +97,7 @@ def cmd_ingest(args, config: Config, store: Store, a: Assistant) -> int:
             f"{path}：{r.files} 个文件（{r.unchanged} 个未变化跳过），新增 {r.new} 条消息"
             + (f"（{parts}）" if parts else "")
             + f"，重复 {r.duplicate} 条；新记忆 {r.memories} 条，自动完成 {r.closed} 条，更新人物 {r.people} 位"
+            + (f"；同步到镜像 {r.mirrored} 条" if r.mirrored else "")
         )
         total_new += r.new
         total_files += r.files
@@ -239,6 +241,7 @@ def cmd_stats(args, config: Config, store, a: Assistant) -> int:
         "allow_cloud_llm": config.allow_cloud_llm,
         "outbound": "disabled（无发送实现）",
         "memory_backend": a.memory.name,
+        "memory_mirrors": a.memory.notes,
         "semantic_search": get_vector_index(config, store)[1] if a.vectors is None else "已启用",
     }
     if args.json:
@@ -252,6 +255,8 @@ def cmd_stats(args, config: Config, store, a: Assistant) -> int:
     print("记忆：" + ("，".join(f"{k} {v}" for k, v in sorted(s["memories"].items())) or "-"))
     pv = s["privacy"]
     print(f"隐私：LLM={pv['llm_backend']} ｜ 云模型={'允许(仅脱敏片段)' if pv['allow_cloud_llm'] else '禁止'} ｜ 出站={pv['outbound']} ｜ 记忆后端={pv['memory_backend']}")
+    for name, note in pv["memory_mirrors"].items():
+        print(f"记忆镜像 {name}：{note}")
     print(f"语义检索：{pv['semantic_search']}")
     return 0
 
@@ -262,9 +267,20 @@ def cmd_connectors(args, *_):
     return 0
 
 
+def cmd_sync(args, config: Config, store, a: Assistant) -> int:
+    if not a.memory.mirrors:
+        reasons = "；".join(f"{k}: {v}" for k, v in a.memory.notes.items()) or "memory_backend=local"
+        print(f"没有可用的记忆镜像（{reasons}）。本地 SQLite 仍是完整的真源。")
+        return 1
+    for name, n in a.memory.sync(store).items():
+        print(f"{name}：推送 {n} 份（记忆 + 人物画像，均为脱敏内容）")
+    return 0
+
+
 COMMANDS = {
     "ingest": cmd_ingest, "ask": cmd_ask, "search": cmd_search, "people": cmd_people, "person": cmd_person,
     "todos": cmd_todos, "done": cmd_done, "digest": cmd_digest, "stats": cmd_stats, "connectors": cmd_connectors,
+    "sync": cmd_sync,
 }
 
 

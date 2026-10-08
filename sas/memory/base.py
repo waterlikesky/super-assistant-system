@@ -22,6 +22,11 @@ KIND_LABEL = {
     "commitment": "承诺",
     "request": "请求",
     "plan": "约定",
+    "profile": "画像",
+    "document": "文档",
+    "episodic": "事件",
+    "persona": "画像",
+    "instruction": "指令",
 }
 TODO_KINDS = ("commitment", "request")
 
@@ -44,6 +49,7 @@ class MemoryItem:
     first_seen: str = ""
     last_seen: str = ""
     effective_confidence: float | None = None
+    source: str = "local"  # 来自哪个后端：local | openviking | tdam | mem0
 
     @property
     def label(self) -> str:
@@ -78,3 +84,8 @@ class MemoryBackend(ABC):
 
     def close(self, item_id: str) -> bool:
         return False
+
+    # 镜像后端可选实现：同步人物画像 / 每日摘要等 Markdown 文档
+    def write_documents(self, docs: dict[str, str]) -> int:
+        """docs: 相对路径（如 people/老王.md）→ Markdown。返回写入数。"""
+        return 0
