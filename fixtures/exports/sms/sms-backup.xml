@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='UTF-8' standalone='yes' ?>
+<!-- 合成数据，全部虚构。格式同 SMS Backup & Restore 导出。 -->
+<smses count="6" backup_set="demo" backup_date="1791331200000" type="full">
+  <sms protocol="0" address="95588" date="1791244800000" type="1" subject="null" body="【示例银行】验证码 482913，您正在进行转账，请勿告诉他人。" toa="null" sc_toa="null" service_center="null" read="1" status="-1" locked="0" date_sent="0" readable_date="2026年10月6日 08:00:00" contact_name="(Unknown)" />
+  <sms protocol="0" address="+8613700001111" date="1791259200000" type="1" subject="null" body="周日回家吃饭吗？记得带上体检报告" toa="null" sc_toa="null" service_center="null" read="1" status="-1" locked="0" date_sent="0" readable_date="2026年10月6日 12:00:00" contact_name="妈妈" />
+  <sms protocol="0" address="10690000" date="1791262800000" type="1" subject="null" body="【示例快递】您的快件 SF1234567890123 已到达驿站，取件码 6-2-3011" toa="null" sc_toa="null" service_center="null" read="1" status="-1" locked="0" date_sent="0" readable_date="2026年10月6日 13:00:00" contact_name="(Unknown)" />
+  <mms date="1791266400000" msg_box="1" address="+8613500003333" contact_name="张伟" read="1" sub="null" ct_t="application/vnd.wap.multipart.related" m_type="132">
+    <parts>
+      <part seq="0" ct="text/plain" name="null" text="明天上午十点开会，别迟到" />
+    </parts>
+  </mms>
+  <sms protocol="0" address="+8613500003333" date="1791267000000" type="2" subject="null" body="好的，我会准时到" toa="null" sc_toa="null" service_center="null" read="1" status="-1" locked="0" date_sent="0" readable_date="2026年10月6日 14:10:00" contact_name="张伟" />
+  <sms protocol="0" address="+8613500003333" date="1791267100000" type="1" subject="null" body="" toa="null" sc_toa="null" service_center="null" read="1" status="-1" locked="0" date_sent="0" readable_date="2026年10月6日 14:11:40" contact_name="张伟" />
+</smses>

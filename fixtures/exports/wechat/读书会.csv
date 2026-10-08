@@ -1,0 +1,8 @@
+localId,TalkerId,Type,SubType,IsSender,CreateTime,Status,StrContent,StrTime,Remark,NickName,Sender
+1,demo_group@chatroom,1,0,0,1791252000,2,这周六下午三点在老地方见，大家记得带书,2026-10-06 10:00:00,读书会,读书会,小美
+2,demo_group@chatroom,1,0,0,1791252120,2,收到，我负责订场地,2026-10-06 10:02:00,读书会,读书会,阿杰
+3,demo_group@chatroom,1,0,1,1791252300,2,我来准备茶点,2026-10-06 10:05:00,读书会,读书会,
+4,demo_group@chatroom,3,0,0,1791252330,2,<img src="demo.jpg"/>,2026-10-06 10:05:30,读书会,读书会,小美
+5,demo_group@chatroom,1,0,0,1791252480,2,我最喜欢村上春树，下次读他的书吧,2026-10-06 10:08:00,读书会,读书会,阿杰
+6,demo_group@chatroom,10000,0,0,1791252500,2,"""阿杰""撤回了一条消息",2026-10-06 10:08:20,读书会,读书会,
+7,demo_group@chatroom,1,0,1,1791252600,2,好主意,2026-10-06 10:10:00,读书会,读书会,
