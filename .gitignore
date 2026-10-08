@@ -35,3 +35,6 @@ node_modules/
 .chroma/
 .lancedb/
 *.index
+
+# sas 本地数据库与输出
+data/

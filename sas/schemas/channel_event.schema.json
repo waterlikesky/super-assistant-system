@@ -1,7 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/waterlikesky/super-assistant-system/schemas/channel_event.schema.json",
+  "$id": "https://github.com/waterlikesky/super-assistant-system/sas/schemas/channel_event.schema.json",
   "title": "ChannelEvent",
+  "description": "所有渠道归一后的单条消息。入库前已脱敏。",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -14,12 +15,12 @@
     "consent_tag"
   ],
   "properties": {
-    "id": { "type": "string", "minLength": 1 },
+    "id": { "type": "string", "minLength": 1, "description": "稳定 id：同一条消息重复摄入得到同一个 id" },
     "channel": {
       "type": "string",
       "enum": ["email", "wechat", "dingtalk", "sms", "feishu", "file", "other"]
     },
-    "direction": { "type": "string", "enum": ["inbound", "outbound"] },
+    "direction": { "type": "string", "enum": ["inbound", "outbound"], "description": "outbound = 我发出的（只用于理解语境，系统不发送）" },
     "timestamp": { "type": "string", "format": "date-time" },
     "participants": {
       "type": "array",
@@ -29,12 +30,13 @@
         "required": ["role", "handle"],
         "properties": {
           "role": { "type": "string", "enum": ["from", "to", "cc", "self", "other"] },
-          "handle": { "type": "string", "description": "Already redacted or hashed handle" },
+          "handle": { "type": "string", "description": "已打码或哈希的标识" },
           "display_name": { "type": "string" }
         }
       }
     },
     "thread_id": { "type": ["string", "null"] },
+    "conversation": { "type": ["string", "null"], "description": "会话名：私聊对象 / 群名 / 邮件主题；已脱敏" },
     "content_text": { "type": "string" },
     "sensitivity": {
       "type": "string",
@@ -43,7 +45,7 @@
     "consent_tag": { "type": "string", "minLength": 1 },
     "raw_ref": {
       "type": ["string", "null"],
-      "description": "Local-only pointer; never upload raw by default"
+      "description": "仅本机路径；不复制、不上传原文"
     },
     "metadata": { "type": "object" }
   }
