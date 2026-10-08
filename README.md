@@ -59,7 +59,7 @@ sas stats
 | 钉钉 | 聊天记录导出或整理成 csv/xlsx，列名含「时间、发送人、内容」（可选「会话」） | `sas ingest 钉钉.csv --source dingtalk` |
 
 - `--me` 告诉 sas 导出里哪个昵称是你（用于判断「谁答应了谁」）；也可以写进 `sas.toml`：`me = ["水如天"]`、`me_emails = ["me@example.com"]`。
-- 识别不准时用 `--source wechat|email|sms|dingtalk` 强制格式；`sas connectors` 列出全部格式。
+- 识别不准时用 `--source wechat|email|sms|dingtalk` 强制格式；`sas connectors` 列出全部格式，列名与已知坑见 [docs/connectors.md](docs/connectors.md)。
 - 定期重新导出、重新 `sas ingest` 即可，只有新消息会被处理。
 - 想用浏览器翻数据：`pip install datasette && datasette data/sas.db`。
 - 全部遗忘：删除 `data/sas.db`。

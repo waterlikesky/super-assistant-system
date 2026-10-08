@@ -58,3 +58,18 @@
 4. LLM 可选，经 `llm` 库或 Ollama HTTP；默认离线可用。
 5. 微信只吃 WeChatMsg / wechat-intelligence-hub / decrypt-skill 的导出物；不碰解密。
 6. 输出可落 Markdown（Obsidian 友好）与 `datasette` 可浏览的 `sas.db`。
+
+## 6. 早期调研补遗（2026-10-07 由 scys-findings.md、github-landscape.md 合并而来）
+
+生财有术帖（§4 之外）：
+
+| 帖子 | entityId | 一句话 |
+|------|----------|--------|
+| 陈钟琦《解密微信聊天记录》保姆级教程 | `82255448142454542` | 本机解密交给 Coding Agent；需降级到特定微信版本并关自动更新 → 本仓库不走这条路 |
+| 苏格《把 AI 接入微信：个人知识库》 | `45544211552415428` | 只读本机库的 wechat-cli；有 DMCA 下架与版本风险；任务要窄 |
+| 浅笑《OpenClaw 完全实战手册》 | `14588481154454282` | 多渠道助理已成熟，自建应专注记忆 + 隐私 + 统一 schema |
+| 《100 个 Agent 案例》 | `45548881511411458` | LangBot / Chatwoot 可作出站与统一收件箱参考 |
+| 亦仁：AI 爽用法 / 超级助理系统 | `45548581185112528` | 「打通所有数据、越用越聪明」——本仓库灵感来源 |
+| 《把业务流程做成 AI Agent 员工》 | `14422114455242422` | 知识库是文件集合不是永久记忆；大库要检索而非全塞上下文 |
+
+其他看过但不采用：LinkAI（商业托管，数据在第三方）、n8n / Make（工作流编排，记忆需自建）、CowAgent / Wechaty 系协议号机器人（偏出站，账号风控高，不作数据底座）、[tzwkb/wechat-decrypt](https://github.com/tzwkb/wechat-decrypt)（本机解密，同 §2 结论）、LangGraph memory（积木而非成品）。
