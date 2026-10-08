@@ -1,7 +1,7 @@
 # 个人超级助理系统（Super Assistant System）
 
 > 目标：打通微信 / 钉钉 / 邮件 / 短信等个人数据，本地优先记忆，越用越聪明。  
-> 现状：**研究 + 架构 + 实现骨架**（M0）。尚未实现真实渠道接入或记忆闭环——请勿夸大能力。  
+> 现状：M0 骨架仍在；M1 已能把一层 `.eml` 目录读成脱敏事件。尚未连接真实邮箱、微信、钉钉、短信，也还没有记忆闭环。  
 > 协作：与 GPT / Codex / Claude 按 `GPT_COLLAB.md` + `IMPLEMENTATION_PLAN.md` 分阶段推进；Grok CLI 入口见 `GROK_COLLAB.md`（Claude↔Grok）。
 
 仓库：https://github.com/waterlikesky/super-assistant-system
@@ -14,7 +14,7 @@
 |------|------|
 | 只读摄入用户自己指出的导出（M1 只做 `.eml` 目录） | 不把微信 / 钉钉 / 邮件 / 短信全文默认送进大模型 |
 | 脱敏后写成统一事件，再沉淀本地事实与可检索片段 | 不代发、不自动回复；出站保持关闭 |
-| 摘要 → 抽事实 → 写入 → 下次命中（M3，尚未实现） | 不把微信本机解密当第一里程碑；M0 未打通任何真实渠道 |
+| 摘要 → 抽事实 → 写入 → 下次命中（M3，尚未实现） | 不把微信本机解密当第一里程碑；真实邮箱 / 微信 / 钉钉 / 短信仍未接入 |
 
 定义与 M1 验收的记录见 [`GROK_COLLAB.md`](GROK_COLLAB.md)「产品钉死」；实现清单以 [`IMPLEMENTATION_PLAN.md`](IMPLEMENTATION_PLAN.md) 的 M1 为准。
 
@@ -71,7 +71,7 @@ Agent 编排（问答 / 摘要 / 提醒；出站默认关）
 | 里程碑 | 内容 | 状态 |
 |--------|------|------|
 | **M0** | 仓库骨架、统一 schema、假数据 ingest 演示 | ✅ 本仓库 |
-| **M1** | 只读摄入 `.eml` 目录（`file_export`）。邮件 OAuth 排在此后 | 范围已定，未实现 |
+| **M1** | 只读摄入一层 `.eml` 目录（`file_export`）。邮件 OAuth 排在此后 | ✅ 夹具可跑 |
 | **M2** | 统一记忆层（Mem0 自托管或 SQLite+向量）+ 脱敏 | 待做 |
 | **M3** | 「越用越聪明」闭环（摘要→事实→写入→检索） | 待做 |
 | **可选** | 微信本机只读插件（版本坑标注）；钉钉；出站需显式开关 | 待评估 |
@@ -97,21 +97,30 @@ Agent 编排（问答 / 摘要 / 提醒；出站默认关）
 ## 6. 目录结构
 
 ```
-connectors/     # 各渠道只读适配器（M0 仅为接口占位）
+connectors/     # 各渠道只读适配器；M1 只有 file_export 会解析 .eml
 ingest/         # 摄入管道：规范化 → 脱敏 → 落盘
-memory/         # 记忆层接口（事实 / 向量）
+memory/         # 记忆层接口（事实 / 向量；仍是内存 stub）
 agent/          # Agent 编排占位
 schemas/        # 统一事件 JSON Schema
 fixtures/       # 假数据（无真实隐私）
 docs/           # 研究、架构、坑
 ```
 
-快速演示（假数据，无需 API Key）：
+M0 假数据演示（无需 API Key）：
 
 ```bash
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 python -m ingest.demo_run
+```
+
+M1 已支持：一层目录里的 `.eml` 只读摄入。不连邮箱，不连微信。说明见 [`docs/connectors/file_export.md`](docs/connectors/file_export.md)。
+
+```bash
+python -m ingest.file_export_run \
+  --input fixtures/sample_exports/mail \
+  --out data/processed/events.jsonl \
+  --consent-tag fixture-m1
 ```
 
 ---

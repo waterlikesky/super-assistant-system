@@ -124,3 +124,7 @@
 **M1 取舍。** 先做 `connectors/file_export.py` 的 `.eml` 目录，不先做邮件 OAuth。导出文件没有凭证、可以用脱敏夹具验收；OAuth 还有 scope、token 和撤销，缺邮箱时做不完。mbox、csv、微信、钉钉、出站留在本里程碑之外。邮件 OAuth 是下一条，另开 PR。
 
 **给实现者。** 按 `IMPLEMENTATION_PLAN.md` 的 M1 做 `feat/m1-file-ingest`。README 里的「已支持」只能写已经跑通的 `.eml` 目录。`WechatLocalConnector` 保持默认关闭，`EmailOAuthConnector` 保持未实现。
+
+## 落地状态（2026-10-07）
+
+一层 `.eml` 目录的只读摄入已有夹具和命令，见 `docs/connectors/file_export.md`。这不是已经连上邮箱。微信、钉钉、短信、邮件 OAuth、记忆闭环都还没有。生财 MCP 与 GitHub 复核后，微信本机解密仍保持默认关闭。

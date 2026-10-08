@@ -52,7 +52,7 @@ python -m ingest.demo_run
 6. 文档：`docs/connectors/file_export.md`，写清只支持 `.eml` 目录、怎样从邮件客户端导出、数据留在本机、怎样删掉 `data/processed/`
 7. README 的「已支持」只写 `.eml` 目录只读摄入
 
-**验收（实现者跑完再勾。本节写入时 M1 尚未实现，下列命令还不能当已通过）**
+**验收（2026-10-07 本机已跑通夹具。邮件 OAuth、微信、钉钉、短信仍未实现）**
 
 ```bash
 python -m ingest.demo_run
@@ -75,6 +75,8 @@ python -m ingest.file_export_run \
 # jsonl 至少 2 行，每行通过 channel_event.schema.json
 # git check-ignore -q data/processed/events.jsonl 的退出码为 0
 ```
+
+本机结果：`pytest -q` 为 16 passed；上面的 file_export 命令退出码 0，写入 2 行，并跳过 `bad-date.eml`。`data/processed/events.jsonl` 被 git 忽略。
 
 **失败时**
 
