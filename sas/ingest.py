@@ -13,6 +13,7 @@ from datetime import date
 from pathlib import Path
 
 from sas.config import Config
+from sas.contacts import link_contacts, save_contacts
 from sas.connectors import ParseContext, SkipRecord, detect, iter_files, resolve_source
 from sas.memory import CompositeMemory, EventView, extract, update_people
 from sas.redact import classify_sensitivity, redact_event
@@ -32,6 +33,8 @@ class IngestReport:
     people: int = 0
     embedded: int = 0
     mirrored: int = 0
+    contacts: int = 0
+    last_parsed: int = 0
     by_connector: Counter = field(default_factory=Counter)
     skipped: list[tuple[str, str]] = field(default_factory=list)
     unrecognized: list[str] = field(default_factory=list)
@@ -72,7 +75,6 @@ def ingest_path(
     candidates = resolve_source(source)
     consent = (consent_tag or "").strip() or f"cli:{date.today().isoformat()}"
     report = IngestReport()
-    tz = config.tzinfo()
     new_rows: list[dict] = []
 
     for file in iter_files(root, recursive=recursive):
@@ -85,30 +87,49 @@ def ingest_path(
         if not force and store.source_unchanged(file, sha):
             report.unchanged += 1
             continue
+        if connector.kind == "contacts":
+            try:
+                report.contacts += save_contacts(store, connector.parse_contacts(file))
+            except SkipRecord as exc:
+                report.skipped.append((file.name, exc.reason))
+            store.record_source(file, sha, connector.name, 0)
+            continue
         ctx = ParseContext(config=config, consent_tag=consent, root=root if root.is_dir() else file.parent)
-        rows = []
         try:
-            for event in connector.parse(file, ctx):
-                where = (event.get("metadata") or {}).get("source_name") or file.name
-                try:
-                    rows.append(store.to_row(prepare(event), connector.name, tz))
-                except ValidationError as exc:
-                    ctx.skip(where, f"不符合 schema（{exc.message}）")
+            events = list(connector.parse(file, ctx))
         except SkipRecord as exc:
             ctx.skip(file.name, exc.reason)
-        report.skipped += ctx.skipped
-        report.parsed += len(rows)
-        fresh = store.insert_events(rows)
-        report.new += len(fresh)
-        report.duplicate += len(rows) - len(fresh)
-        report.by_connector[connector.name] += len(fresh)
-        new_rows += fresh
-        if vectors is not None and fresh:
-            report.embedded += vectors.add(fresh)
-        store.record_source(file, sha, connector.name, len(rows))
+            events = []
+        rows = store_events(events, connector.name, ctx, store=store, config=config, report=report, vectors=vectors)
+        new_rows += rows
+        store.record_source(file, sha, connector.name, report.last_parsed)
 
     learn(new_rows, store=store, memory=memory, report=report)
     return report
+
+
+def store_events(events, connector_name: str, ctx: ParseContext, *, store: Store, config: Config,
+                 report: IngestReport, vectors=None) -> list[dict]:
+    """校验 + 脱敏 + 去重入库，返回真正新增的行。文件与 IMAP 摄入共用。"""
+    tz = config.tzinfo()
+    rows = []
+    for event in events:
+        where = (event.get("metadata") or {}).get("source_name") or connector_name
+        try:
+            rows.append(store.to_row(prepare(event), connector_name, tz))
+        except ValidationError as exc:
+            ctx.skip(where, f"不符合 schema（{exc.message}）")
+    report.skipped += ctx.skipped
+    ctx.skipped = []
+    report.parsed += len(rows)
+    report.last_parsed = len(rows)
+    fresh = store.insert_events(rows)
+    report.new += len(fresh)
+    report.duplicate += len(rows) - len(fresh)
+    report.by_connector[connector_name] += len(fresh)
+    if vectors is not None and fresh:
+        report.embedded += vectors.add(fresh)
+    return fresh
 
 
 def learn(rows: list[dict], *, store: Store, memory: CompositeMemory, report: IngestReport | None = None) -> None:
@@ -119,6 +140,7 @@ def learn(rows: list[dict], *, store: Store, memory: CompositeMemory, report: In
         report.closed += len(memory.observe_closure(ev))
         report.memories += memory.write(extract(ev))
     report.people += update_people(store, rows)
+    link_contacts(store)
     if memory.mirrors and rows:
         new_ids = {r["id"] for r in rows}
         changed = [i for i in memory.primary.list() if new_ids & set(i.source_event_ids)]

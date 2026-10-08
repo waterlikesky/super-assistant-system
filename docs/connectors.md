@@ -13,6 +13,8 @@ sas 只读**你自己导出的文件**。`sas connectors` 列出全部格式；�
 | `sms_xml` | Android「SMS Backup & Restore」 | `.xml` 含 `<smses` | `type=2` / `msg_box=2` 为我发出；mms 只取文本部分；号码入库前换成哈希 |
 | `sms_csv` | 任意短信 csv | 表头有号码列 + 内容列 | 列名别名：号码/address、内容/body、时间/date、类型/type（1/2、接收/发送）、联系人/contact_name |
 | `dingtalk` | 钉钉导出或手工整理 | `.csv` 表头含 时间 + 发送人 + 内容；`.xlsx` 文件名含「钉钉/dingtalk」 | 可选「会话」列，否则用文件名；xlsx 需 `pip install '.[xlsx]'` |
+| `vcard` | 通讯录 `.vcf`（3.0 / 4.0 / 2.1 QUOTED-PRINTABLE） | `.vcf` | 不产生消息；按姓名 / 昵称 / 电话哈希 / 打码邮箱把人物合并，别名进 `people.aliases` |
+| `imap`（命令 `sas imap`） | 任意 IMAP 邮箱（QQ / 163 / Gmail 预设） | 不走文件识别 | `EXAMINE` + `BODY.PEEK[]`，写命令在代码层被拒；按 UIDVALIDITY + UID 增量；密码只读 `SAS_IMAP_PASSWORD` 或 keyring |
 | `events` | 已是 ChannelEvent 的 `.json/.jsonl` | 含 `"channel"` 与 `"content_text"` | 用于对接其他工具的产出 |
 
 通用规则：目录默认只读这一层，`-r` 才递归；点开头的文件/目录一律跳过；解析失败的单条记录打印 `skipped <位置>: <原因>` 后跳过，不写半条。无时区的时间按 `SAS_TZ`（默认 Asia/Shanghai）解释。

@@ -57,6 +57,7 @@ class Connector(ABC):
     description: str = ""
     suffixes: tuple[str, ...] = ()
     read_only: bool = True  # 所有 connector 只读；没有 send 方法
+    kind: str = "events"  # events：产出 ChannelEvent；contacts：产出通讯录条目（用于人物别名合并）
 
     def sniff(self, path: Path) -> bool:
         return path.suffix.lower() in self.suffixes

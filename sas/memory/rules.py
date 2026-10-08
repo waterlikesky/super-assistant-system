@@ -38,6 +38,7 @@ REQUEST_RES = [
     re.compile(r"(?<!我)(?:帮我|记得|别忘了|不要忘了|能否)"),
     re.compile(r"(?i)\b(?:can|could|would) you\b|^please\b"),
     re.compile(r"(?:大家|各位|所有人|全体)"),
+    re.compile(r"(?:能不能|能否|可不可以|可以|能)(?:帮我|帮忙|把|给我|发我)"),
 ]
 BROADCAST_RE = re.compile(r"大家|各位|所有人|全体|@所有人")
 

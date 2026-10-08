@@ -7,6 +7,7 @@ import re
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 
+from sas.contacts import names_of
 from sas.memory import ME, TODO_KINDS, CompositeMemory, MemoryItem
 from sas.memory.rules import BROADCAST_RE, REQUEST_RES, clauses
 from sas.store import Store
@@ -118,16 +119,28 @@ class Assistant:
         self.reply_window_days = reply_window_days
 
     # ---------- 基础查询 ----------
+    def alias_map(self) -> dict[str, str]:
+        """叫法 → 显示名（含通讯录合并来的别名）。"""
+        out = {}
+        for r in self.store.query("select name, aliases from people"):
+            out[r["name"]] = r["name"]
+            for alias in json.loads(r.get("aliases") or "[]"):
+                out.setdefault(alias, r["name"])
+        return out
+
     def known_names(self) -> list[str]:
-        names = {r["name"] for r in self.store.query("select name from people")}
+        names = set(self.alias_map())
         names |= {r["conversation"] for r in self.store.query("select distinct conversation from events where conversation != ''")}
         return sorted((n for n in names if n and len(n) >= 2), key=len, reverse=True)
 
     def mentioned_people(self, text: str) -> list[str]:
+        aliases = self.alias_map()
         found, rest = [], text
         for name in self.known_names():
             if name and name in rest:
-                found.append(name)
+                canonical = aliases.get(name, name)
+                if canonical not in found:
+                    found.append(canonical)
                 rest = rest.replace(name, " ")
         return found
 
@@ -155,10 +168,13 @@ class Assistant:
         return bool(self.store.query("select 1 from people where name = ?", [name]))
 
     def last_conversation(self, name: str, limit: int = 6) -> list[dict]:
+        names = sorted(names_of(self.store, name))
+        marks = ",".join("?" * len(names))
+        likes = " or ".join("participants like ?" for _ in names)
         rows = self.store.query(
-            """select * from events where (sender = ? or conversation = ? or participants like ?)
+            f"""select * from events where (sender in ({marks}) or conversation in ({marks}) or {likes})
                order by epoch desc limit 1""",
-            [name, name, f'%"display_name": "{name}"%'],
+            [*names, *names, *(f'%"display_name": "{n}"%' for n in names)],
         )
         if not rows:
             return []
@@ -208,11 +224,17 @@ class Assistant:
         return rows
 
     def profile(self, name: str) -> dict | None:
-        matches = self.store.query("select * from people where name = ? or name like ?", [name, f"%{name}%"])
+        canonical = self.alias_map().get(name, name)
+        matches = self.store.query(
+            "select * from people where name = ? or name like ? or aliases like ? order by name = ? desc",
+            [canonical, f"%{name}%", f'%"{name}"%', canonical],
+        )
         if not matches:
             return None
         person = matches[0]
         person["channels"] = json.loads(person["channels"])
+        person["aliases"] = json.loads(person.get("aliases") or "[]")
+        person["org"] = person.get("org") or ""
         n = person["name"]
         about = self.memory.list(kind=("fact", "preference"), subject=n, now=self.now)
         plans = [i for i in self.memory.list(kind="plan", now=self.now) if i.subject == n]

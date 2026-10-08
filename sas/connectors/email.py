@@ -150,7 +150,7 @@ def _is_outbound(msg, participants: list[dict], ctx: ParseContext) -> bool:
     return bool(mine and any(s in mine for s in senders))
 
 
-def message_to_event(msg, *, ctx: ParseContext, path: Path, via: str, fallback_key: str) -> dict:
+def message_to_event(msg, *, ctx: ParseContext, path: Path | None, via: str, fallback_key: str) -> dict:
     text = _body_text(msg).strip()
     if not text:
         raise SkipRecord("正文为空")
@@ -173,11 +173,11 @@ def message_to_event(msg, *, ctx: ParseContext, path: Path, via: str, fallback_k
         "content_text": text,
         "sensitivity": "confidential" if "验证码" in text else "personal",
         "consent_tag": ctx.consent_tag,
-        "raw_ref": str(path.resolve()),
+        "raw_ref": str(path.resolve()) if path else None,
         "metadata": {
             "ingest_via": via,
             "subject": subject,
-            "source_name": path.name,
+            "source_name": path.name if path else via,
             "attachments": _attachments(msg),
             "is_service": bool(sender) and not outbound and is_service_address(sender),
         },

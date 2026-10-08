@@ -184,6 +184,10 @@ def update_people(store: Store, rows: list[dict]) -> int:
     """按显示名聚合人物（跨渠道同名即合并）。服务号、群名不算人。"""
     table = store.db["people"]
     touched = set()
+    alias_to_key = {}
+    for p in store.query("select key, aliases from people"):
+        for alias in json.loads(p.get("aliases") or "[]"):
+            alias_to_key[alias] = p["key"]
     for row in sorted(rows, key=lambda r: r["epoch"]):
         if row["is_service"]:
             continue
@@ -193,7 +197,7 @@ def update_people(store: Store, rows: list[dict]) -> int:
         for name in names:
             if not name or name == ME or name == "未知":
                 continue
-            key = person_key(name)
+            key = alias_to_key.get(name) or person_key(name)
             try:
                 p = table.get(key)
             except Exception:

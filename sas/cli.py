@@ -37,6 +37,15 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--consent-tag", help="这批数据的同意标记（默认 cli:<今天>）")
     s.add_argument("--force", action="store_true", help="文件没变也重新解析（已入库的消息仍不会重复）")
 
+    s = sub.add_parser("imap", help="只读拉取 IMAP 邮箱（QQ / 163 / Gmail / 任意 IMAP；EXAMINE + BODY.PEEK，不标已读）")
+    s.add_argument("--user", required=True, help="邮箱地址")
+    s.add_argument("--provider", choices=["qq", "163", "126", "gmail", "outlook"], help="常见服务商预设")
+    s.add_argument("--host")
+    s.add_argument("--port", type=int)
+    s.add_argument("--folder", default="INBOX")
+    s.add_argument("--limit", type=int, help="本次最多取最新的 N 封（首次同步大邮箱时用）")
+    s.add_argument("--consent-tag")
+
     s = sub.add_parser("ask", help="用一句话问：某人上次聊了什么 / 我答应过谁什么 / 今天该回谁 / 任意关键词")
     s.add_argument("question")
     s.add_argument("--llm", action="store_true", help="让已配置的 LLM 基于检索结果组织回答（默认离线）")
@@ -103,6 +112,31 @@ def cmd_ingest(args, config: Config, store: Store, a: Assistant) -> int:
         total_files += r.files
     print(f"数据库：{config.db_path}（共 {store.count()} 条消息）")
     return 0 if total_files else 1
+
+
+def cmd_imap(args, config: Config, store: Store, a: Assistant) -> int:
+    from sas.connectors import ParseContext, SkipRecord
+    from sas.connectors.imap import ImapAccount, fetch_events, get_password, iter_state, save_state
+    from sas.ingest import IngestReport, learn, store_events
+
+    try:
+        account = ImapAccount.from_args(args.user, args.provider, args.host, args.port, args.folder)
+        password = get_password(account.user)
+        state = iter_state(store, account)
+        ctx = ParseContext(config=config, consent_tag=(args.consent_tag or f"imap:{date.today().isoformat()}"))
+        events, new_state = fetch_events(account, ctx, state=state, password=password, limit=args.limit)
+    except SkipRecord as exc:
+        print(f"错误：{exc.reason}", file=sys.stderr)
+        return 1
+    report = IngestReport()
+    rows = store_events(events, "imap", ctx, store=store, config=config, report=report, vectors=a.vectors)
+    learn(rows, store=store, memory=a.memory, report=report)
+    save_state(store, account, new_state, len(events))
+    for where, reason in report.skipped:
+        print(f"skipped {where}: {reason}")
+    print(f"{account.host}/{account.folder}：取到 {len(events)} 封（UID ≤ {new_state['last_uid']}），新增 {report.new} 条，"
+          f"重复 {report.duplicate} 条；新记忆 {report.memories} 条。邮箱保持只读，未标记已读。")
+    return 0
 
 
 def cmd_ask(args, config: Config, store: Store, a: Assistant) -> int:
@@ -280,7 +314,7 @@ def cmd_sync(args, config: Config, store, a: Assistant) -> int:
 COMMANDS = {
     "ingest": cmd_ingest, "ask": cmd_ask, "search": cmd_search, "people": cmd_people, "person": cmd_person,
     "todos": cmd_todos, "done": cmd_done, "digest": cmd_digest, "stats": cmd_stats, "connectors": cmd_connectors,
-    "sync": cmd_sync,
+    "sync": cmd_sync, "imap": cmd_imap,
 }
 
 

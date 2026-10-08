@@ -13,6 +13,7 @@ from .dingtalk import DingTalkConnector
 from .email import EmlConnector, MboxConnector
 from .events import ChannelEventConnector
 from .sms import SmsCsvConnector, SmsXmlConnector
+from .vcard import VCardConnector
 from .wechat import WeChatCsvConnector, WeChatTxtConnector
 
 REGISTRY: dict[str, Connector] = {}
@@ -27,6 +28,8 @@ ALIASES: dict[str, tuple[str, ...]] = {
     "mbox": ("email_mbox",),
     "sms": ("sms_xml", "sms_csv"),
     "dingtalk": ("dingtalk",),
+    "contacts": ("vcard",),
+    "vcard": ("vcard",),
 }
 
 
@@ -47,6 +50,7 @@ for _c in (
     SmsCsvConnector(),
     DingTalkConnector(),
     ChannelEventConnector(),
+    VCardConnector(),
 ):
     register(_c)
 
