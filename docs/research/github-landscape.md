@@ -27,6 +27,7 @@
 | robbin/wechat-exporter 等 | Mac 解密导出 skill（社区常见） | 版本漂移即失效 |
 | ydotdog/wechat-export-macos | macOS 导出 | 同上 |
 | yichen-wechat-local-vault / huohuoer/wechat-cli | 苏格文：只读本机库 | **DMCA 下架风险**、版本绑定；新版微信常挂 |
+| [tzwkb/wechat-decrypt](https://github.com/tzwkb/wechat-decrypt) | 2026-10-07 仍可见：本机密钥解密微信 4.x，只读查询 | 要设备密钥；macOS / Windows 路径不同；不进本仓库，不作 M1 |
 | [zhayujie/CowAgent](https://github.com/zhayujie/CowAgent)（原 chatgpt-on-wechat 系） | ~47k；多渠道个人助理 / Agent Harness | 偏「机器人出站」；账号风控与条款风险高 |
 | [fuergaosi233/wechat-chatgpt](https://github.com/fuergaosi233/wechat-chatgpt) 等 | Wechaty 等协议接 ChatGPT | 协议号/网页号不稳定，**不推荐作个人数据底座** |
 
@@ -52,7 +53,7 @@
 ```
 统一事件 Schema
     + 本地记忆（Mem0 自托管 或 SQLite/向量 + 事实表）
-    + 合规清晰的邮件 OAuth / 导出文件先做（M1）
+    + M1 先做用户自己导出的一层 .eml 目录；邮件 OAuth 排在这条验收之后
     + 微信本机只读作可选插件（版本坑标注）
     + 出站默认关闭
 ```

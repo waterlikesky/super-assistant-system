@@ -76,4 +76,4 @@
 2. `docs/problems/channel-ingestion-pitfalls.md`（接入前过清单）
 3. `schemas/channel_event.schema.json` + `ingest/demo_run.py`（理解数据形状）
 
-对 GPT 说：「按 M1 实现 file_export 摄入，验收见 IMPLEMENTATION_PLAN」。
+对 Claude / Codex 说：「按 IMPLEMENTATION_PLAN 的 M1，只实现 `.eml` 目录的 file_export。不要做邮件 OAuth、微信或出站。」

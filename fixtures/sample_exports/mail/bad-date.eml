@@ -1,0 +1,10 @@
+From: Broken <broken@example.com>
+To: Me <me@example.com>
+Subject: bad
+Date: not-a-real-date
+Message-ID: <bad@example.com>
+MIME-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+This body is fine but the date is not.

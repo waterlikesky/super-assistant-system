@@ -26,25 +26,67 @@ python -m ingest.demo_run
 
 ---
 
-## M1 — 单一渠道只读摄入（优先合规）
+## M1 — `file_export`：只读解析 `.eml` 目录
 
-**推荐顺序**：`file_export`（用户导出的 mbox/eml/csv）→ 再 `email` OAuth 只读。
+**决定（Grok，2026-10-07，仓库当时为 M0）**：本里程碑只做这一种输入。mbox、csv、邮件 OAuth、微信、钉钉、出站都不在这个 PR。
 
-**任务拆解（可开 PR：`feat/m1-file-or-email-ingest`）**
+**为何先做导出文件**：`.eml` 可以用脱敏夹具在本地跑完，不需要邮箱凭证。邮件 OAuth 还要最小 scope、钥匙串和撤销说明，缺凭证时只能停在假数据。OAuth 列为下一条，不提前开工。
 
-1. 实现 `connectors/file_export.py`：解析一种导出格式 → `ChannelEvent`
-2. 或 `connectors/email_imap_or_oauth.py`：最小只读；token 存系统钥匙串/本地加密文件
-3. `ingest/pipeline.py`：validate（jsonschema）→ redact → 写入 `data/processed/`（gitignored）
-4. 文档：`docs/connectors/email_or_file.md`（权限截图说明、撤销方式）
-5. 测试：用脱敏假 mbox 夹具，无真实邮箱
+**任务（PR：`feat/m1-file-ingest`）**
 
-**验收**
+1. `connectors/file_export.py`：给定一个目录，只读取这一层里的 `*.eml`（不递归子目录，不进入隐藏目录）。每封信产出一条 `ChannelEvent`：
+   - `channel` 为 `email`；`metadata.ingest_via` 为 `file_export`
+   - `direction` 为 `inbound`
+   - `id` 稳定：优先 `Message-ID`；没有则用 `file:` 加相对路径的稳定哈希。同一文件重跑，`id` 不变
+   - `timestamp` 取 `Date`。缺省或无法解析时，该文件失败并记入错误清单，不写半条事件
+   - `participants` 来自 From / To / Cc；handle 在落盘前打码
+   - `thread_id`：有 `In-Reply-To` 或 `References` 的第一个 id 则用之，否则 `null`
+   - `content_text` 为纯文本：有 `text/plain` 用它，否则从 HTML 去掉标签。遇到单独一行 `-- ` 时丢掉其后的签名；没有这行就保留正文，并在 connector 文档里写明
+   - `consent_tag` 由调用方传入；缺省则拒绝运行
+   - `raw_ref` 只记本地路径，不把原信复制进仓库
+   - 附件只把文件名和大小写入 `metadata.attachments`，字节不进 `content_text`
+2. 增加摄入入口（新模块，或在现有 pipeline 上加写盘）：`validate`（jsonschema）→ `redact` → 写入 `data/processed/events.jsonl`
+3. `.gitignore` 已含 `data/processed/`（本定义补丁补上；M0 计划写了要忽略，当时文件里没有）。实现时确认这一行仍在，且 jsonl 不会被提交
+4. 脱敏至少覆盖：正文手机号变成 `[PHONE]`；正文和 handle 里的邮箱本地部分打码；`sensitivity=confidential` 或命中验证码的正文不得原样落盘
+5. 夹具：`fixtures/sample_exports/mail/` 放 2 封脱敏 `.eml`（一封普通信，一封含手机号、邮箱和验证码），再放 1 个应被拒绝的文件（坏日期或空正文）
+6. 文档：`docs/connectors/file_export.md`，写清只支持 `.eml` 目录、怎样从邮件客户端导出、数据留在本机、怎样删掉 `data/processed/`
+7. README 的「已支持」只写 `.eml` 目录只读摄入
 
-- 本地跑通：导出文件 → `data/processed/*.jsonl`
-- CI 或本地 pytest：非法事件被拒；敏感字段被 redact
-- README 更新「M1 已支持 X」——仅写真实已支持格式
+**验收（2026-10-07 本机已跑通夹具。邮件 OAuth、微信、钉钉、短信仍未实现）**
 
-**不做**：微信；出站；多渠道并行。
+```bash
+python -m ingest.demo_run
+# 退出码 0。M0 假数据路径仍可用。
+
+pytest -q
+# 含 tests/test_file_export.py：
+# 合法 eml 通过 schema；
+# jsonl 里看不到夹具中的手机号和验证码明文；
+# 坏文件被拒绝，且没有对应事件；
+# 默认 WechatLocalConnector 仍拒绝迭代；
+# EmailOAuthConnector 仍是 NotImplementedError；
+# 跑夹具时没有对外网络连接。
+
+python -m ingest.file_export_run \
+  --input fixtures/sample_exports/mail \
+  --out data/processed/events.jsonl \
+  --consent-tag fixture-m1
+# 退出码 0
+# jsonl 至少 2 行，每行通过 channel_event.schema.json
+# git check-ignore -q data/processed/events.jsonl 的退出码为 0
+```
+
+本机结果：`pytest -q` 为 16 passed；上面的 file_export 命令退出码 0，写入 2 行，并跳过 `bad-date.eml`。`data/processed/events.jsonl` 被 git 忽略。
+
+**失败时**
+
+- 目录不存在，或其中没有 `.eml`：非 0 退出，stderr 写明原因，不留下表示成功的空文件
+- 单封解析失败：跳过该文件，stdout 列出路径和原因；其余成功的仍写入。全部失败则退出码非 0
+- 缺 `--consent-tag`：非 0 退出，不写盘
+
+**不做**：微信；邮件 OAuth；出站；mbox；csv；多渠道并行。
+
+**下一条（另开 PR，本里程碑不实现）**：邮件 OAuth 只读。前置是本验收通过；token 放系统钥匙串或本地加密文件；scope 只读；文档写清撤销步骤。
 
 ---
 
