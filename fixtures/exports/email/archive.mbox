@@ -1,0 +1,40 @@
+From alice@example.com Mon Oct  5 10:00:00 2026
+From: Alice Chen <alice@example.com>
+To: Me <me@example.com>
+Subject: Q4 预算
+Date: Mon, 05 Oct 2026 10:00:00 +0800
+Message-ID: <q4-1@example.com>
+MIME-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 8bit
+
+小满你好，能否在周五前把 Q4 预算表发我？我的手机 13800001234。
+谢谢
+Alice
+
+From me@example.com Mon Oct  5 11:30:00 2026
+From: Me <me@example.com>
+To: Alice Chen <alice@example.com>
+Subject: Re: Q4 预算
+Date: Mon, 05 Oct 2026 11:30:00 +0800
+Message-ID: <q4-2@example.com>
+In-Reply-To: <q4-1@example.com>
+X-Gmail-Labels: Sent
+MIME-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 8bit
+
+好的，我周五前发你预算表。
+
+From notice@bank.example.com Tue Oct  6 07:30:00 2026
+From: 示例银行 <notice@bank.example.com>
+To: Me <me@example.com>
+Subject: 信用卡账单
+Date: Tue, 06 Oct 2026 07:30:00 +0800
+Message-ID: <bill-1@bank.example.com>
+MIME-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 8bit
+
+您的信用卡 6225 8812 3456 7898 本期账单 3,210.00 元，到期还款日 10月20日。
+

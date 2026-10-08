@@ -1,1 +1,4 @@
-jsonschema>=4.23.0
+# 不想安装包时：pip install -r requirements.txt 后直接用 python -m sas
+sqlite-utils>=3.35
+jsonschema>=4.20
+pytest>=8

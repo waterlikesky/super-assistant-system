@@ -8,6 +8,7 @@ credentials/
 secrets/
 data/raw/
 data/private/
+data/processed/
 *.db
 *.sqlite
 *.sqlite3
@@ -34,3 +35,6 @@ node_modules/
 .chroma/
 .lancedb/
 *.index
+
+# sas 本地数据库与输出
+data/

@@ -1,0 +1,42 @@
+From: Alice <alice@example.com>
+To: Me <me@example.com>
+Cc: Bob <bob@example.com>
+Subject: Thursday meetup
+Date: Tue, 06 Oct 2026 09:15:00 -0700
+Message-ID: <meet-thursday@example.com>
+In-Reply-To: <thread-root@example.com>
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="===============4866298934057556759=="
+
+--===============4866298934057556759==
+Content-Type: multipart/alternative;
+ boundary="===============6355166375459373211=="
+
+--===============6355166375459373211==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Hi, let's meet Thursday 3pm.
+Ping carol@example.com
+
+-- 
+Sent from my phone
+
+--===============6355166375459373211==
+Content-Type: text/html; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+MIME-Version: 1.0
+
+<p>HTML should not win</p>
+
+--===============6355166375459373211==--
+
+--===============4866298934057556759==
+Content-Type: text/plain
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="notes.txt"
+MIME-Version: 1.0
+
+ZG8tbm90LWlubGluZS10aGlzLXRva2VuCg==
+
+--===============4866298934057556759==--

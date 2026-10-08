@@ -1,113 +1,26 @@
-# 实现计划（可交给 GPT / Codex）
+# 里程碑（已完成 / 下一步）
 
-> 原则：一次一个里程碑；每阶段有验收标准；不伪造跑通。  
-> 协作约定见 `GPT_COLLAB.md`。
+> 规则：每条都有可运行的验收；没跑通的不写成已完成。验收统一是 `python3 -m pytest -q` 全绿 + README 快速开始可复制运行。
 
----
+## 已完成
 
-## M0 — 仓库骨架 + Schema + 假数据演示（本提交）
+| 里程碑 | 内容 | 验收 |
+|--------|------|------|
+| M0（6258902） | 统一 ChannelEvent schema、假数据演示、隐私立场 | 已被 M2 取代 |
+| M1（eab70f8） | 单层 `.eml` 目录只读摄入 + 脱敏 | 解析器迁入 `sas/connectors/email.py`，断言迁到 `tests/test_email.py` |
+| **M2 本地 MVP**（2026-10-07，分支 `claude/optimize-20261007`） | 可安装 `sas` 包；8 种导出格式 connector（微信 txt/csv、eml、mbox、短信 xml/csv、钉钉 csv/xlsx、ChannelEvent json）；入库前脱敏（手机/验证码/身份证/银行卡/邮箱/单号）；sqlite-utils + FTS5 trigram 中文检索；文件指纹增量 + 消息 id 去重 | `tests/test_connectors.py`、`test_redact.py`、`test_store_ingest.py` |
+| **M3 记忆闭环 v1**（同上） | 规则抽取 承诺/请求/偏好/事实/约定 + 截止日期；noisy-OR 合并、半衰期衰减、偏好矛盾降权、后续消息自动关闭承诺；人物聚合；`MemoryBackend` 接口 + mem0 可选镜像 | `tests/test_memory.py` |
+| **M4 CLI** | `ingest / ask / search / people / person / todos / done / digest / stats / connectors`；ask 离线带出处；digest 输出 Obsidian Markdown；LLM（Ollama / simonw/llm）与语义检索（sqlite-vec）可选，云端需显式开关 | `tests/test_cli.py`、`test_embed.py` |
 
-**任务**
+## 下一步（按优先级）
 
-- [x] 文档：README、生财/GitHub 调研、架构、坑、协作说明
-- [x] `schemas/channel_event.schema.json`
-- [x] `connectors/` 接口占位（email / file / wechat_disabled）
-- [x] `ingest/demo_run.py`：读 `fixtures/sample_events` → 脱敏 → 打印规范化结果
-- [x] `memory/` 内存版 stub（dict facts）
+1. **在真实导出上校准规则**（维护者用自己的 WeChatMsg / Takeout 导出跑一周，记录误报/漏报到 `docs/eval/`，不提交原文）。验收：误报样例转成虚构测试用例。
+2. **LLM 辅助抽取**：规则先抽，模型只补漏、只看脱敏片段，输出必须引用 event id；默认关闭。验收：用假后端的测试证明无模型时行为不变、有模型时不越权。
+3. **人物别名合并**：同一人在微信备注、邮件显示名、短信通讯录名不同 → `sas person merge A B`，写入 people.aliases。
+4. **定时摄入**：`sas watch <目录>` 或 cron 示例；导出目录有新文件就增量摄入并生成当日 digest。
+5. **MCP 接口**：把 ask / person / todos 暴露为只读 MCP 工具（参考 mem0-mcp），给 OpenClaw / Claude 当记忆层。
+6. 语义检索实测：装 `.[llm,vec]` + 本地 embedding 模型（如 sentence-transformers 插件），补端到端测试。
 
-**验收**
+## 不做
 
-```bash
-python -m ingest.demo_run
-# 退出码 0；输出至少 1 条 redacted event 与 1 条抽取事实（规则/假 LLM）
-```
-
-**禁止**：声称已连接真实微信/邮箱。
-
----
-
-## M1 — 单一渠道只读摄入（优先合规）
-
-**推荐顺序**：`file_export`（用户导出的 mbox/eml/csv）→ 再 `email` OAuth 只读。
-
-**任务拆解（可开 PR：`feat/m1-file-or-email-ingest`）**
-
-1. 实现 `connectors/file_export.py`：解析一种导出格式 → `ChannelEvent`
-2. 或 `connectors/email_imap_or_oauth.py`：最小只读；token 存系统钥匙串/本地加密文件
-3. `ingest/pipeline.py`：validate（jsonschema）→ redact → 写入 `data/processed/`（gitignored）
-4. 文档：`docs/connectors/email_or_file.md`（权限截图说明、撤销方式）
-5. 测试：用脱敏假 mbox 夹具，无真实邮箱
-
-**验收**
-
-- 本地跑通：导出文件 → `data/processed/*.jsonl`
-- CI 或本地 pytest：非法事件被拒；敏感字段被 redact
-- README 更新「M1 已支持 X」——仅写真实已支持格式
-
-**不做**：微信；出站；多渠道并行。
-
----
-
-## M2 — 统一记忆层
-
-**任务（PR：`feat/m2-local-memory`）**
-
-1. 选定后端之一并写进配置：
-   - A. SQLite + 本地 embedding（sentence-transformers / 小号 API 仅向量）
-   - B. 自托管 Mem0（Docker），API 包一层 `memory/store.py`
-2. 接口：`upsert_chunks` / `upsert_facts` / `search(query, user_id, k)`
-3. 事实抽取：先规则 + 可选 LLM（**只送脱敏文本**）
-4. 单测：写入后能按关键词/语义搜回
-
-**验收**
-
-- `python -m ingest.demo_run --persist` 后 `python -m memory.search_cli "快递"` 能命中夹具
-- 配置 `allow_raw_llm_upload=false` 有测试锁住
-
-**不做**：Letta 全量 runtime（可列为 M2.5 调研）。
-
----
-
-## M3 — 越用越聪明闭环
-
-**任务（PR：`feat/m3-memory-loop`）**
-
-1. 定时/手动 job：`jobs/summarize_and_extract.py`
-2. 对新增事件窗口做摘要 → 事实合并（冲突策略文档化）
-3. Agent 最小 CLI：`agent/ask.py "我最近和谁约了开会？"` → 先 search 再答
-4. 指标（简陋即可）：命中率抽检表 `docs/eval/m3_smoke.md`
-
-**验收**
-
-- 同一问题在「仅 raw」vs「记忆后」对比，文档记录一次真实输出
-- 无记忆时明确说「不知道」，禁止编造
-
----
-
-## 可选里程碑
-
-### M2W — 微信本机只读插件
-
-- 默认 `enabled: false`
-- 包装社区 skill（陈钟琦 / 苏格文工具链），**不 vendoring 违规代码**
-- README 大字警告：版本、降级、条款、风控
-- 验收：在标注版本机上只读导出 → ChannelEvent；失败则文档写「未验证」
-
-### M-DT — 钉钉只读
-
-- 企业授权流程文档；租户隔离
-
-### M-OUT — 出站
-
-- 显式 feature flag + 人工确认；优先飞书/邮件草稿，而非微信个人号
-
----
-
-## GPT / Codex 领取任务时的模板
-
-```
-请阅读 GPT_COLLAB.md 与 IMPLEMENTATION_PLAN.md 的 Mx。
-只实现 Mx 列出的任务；不要顺手做微信或出站。
-验收命令：……
-若阻塞（缺 OAuth 凭证/缺真机微信），在 PR 描述写阻塞，提交到可测的假数据边界为止。
-```
+微信解密 / Hook / 协议号；任何发送或自动回复；默认上传全文；企业系统 API 集成（钉钉开放平台、邮件 OAuth 留待有明确需求时单独评估最小权限方案）。
