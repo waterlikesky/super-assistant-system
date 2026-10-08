@@ -17,6 +17,8 @@ from typing import Iterator
 
 from .base import BaseConnector, ConnectorCapability
 
+MAX_EML_BYTES = 25 * 1024 * 1024
+
 
 class EmlSkip(Exception):
     def __init__(self, reason: str) -> None:
@@ -80,14 +82,15 @@ def _thread_id(msg) -> str | None:
     return None
 
 
-def _event_id(msg, path: Path, root: Path) -> str:
+def _event_id(msg, data: bytes) -> str:
     raw_id = msg.get("message-id")
     if raw_id:
         token = _message_id(str(raw_id))
         if token:
             return f"email:{token}"
-    relative = path.relative_to(root).as_posix() if path.is_relative_to(root) else path.name
-    digest = hashlib.sha256(relative.encode("utf-8")).hexdigest()[:16]
+    # No Message-ID: key on the message bytes, so the same file keeps its id after a
+    # rename and different messages that share a file name do not collide.
+    digest = hashlib.sha256(data).hexdigest()[:16]
     return f"file:{digest}"
 
 
@@ -149,7 +152,11 @@ def _timestamp(msg) -> str:
 
 
 def parse_eml(path: Path, root: Path, consent_tag: str) -> dict:
+    if path.is_symlink():
+        raise EmlSkip("符号链接，未读取")
     try:
+        if path.stat().st_size > MAX_EML_BYTES:
+            raise EmlSkip("文件过大")
         data = path.read_bytes()
     except OSError as exc:
         raise EmlSkip("无法读取") from exc
@@ -164,7 +171,7 @@ def parse_eml(path: Path, root: Path, consent_tag: str) -> dict:
     sensitivity = "confidential" if "验证码" in text else "personal"
     subject = str(msg.get("subject") or "")
     return {
-        "id": _event_id(msg, path, root),
+        "id": _event_id(msg, data),
         "channel": "email",
         "direction": "inbound",
         "timestamp": _timestamp(msg),

@@ -187,3 +187,49 @@ def test_processed_output_is_gitignored():
         check=False,
     )
     assert result.returncode == 0
+
+
+def _plain_eml(subject: str, body: str) -> bytes:
+    message = EmailMessage()
+    message["From"] = "Ada <ada@example.com>"
+    message["Date"] = "Wed, 07 Oct 2026 01:02:03 +0000"
+    message["Subject"] = subject
+    message.set_content(body)
+    return message.as_bytes()
+
+
+def test_symlink_is_skipped_not_followed(tmp_path):
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    (outside / "target.eml").write_bytes(_plain_eml("outside", "outside the export dir"))
+    export = tmp_path / "export"
+    export.mkdir()
+    (export / "link.eml").symlink_to(outside / "target.eml")
+    with pytest.raises(Exception, match="符号链接"):
+        parse_eml(export / "link.eml", export, "fixture-m1")
+
+
+def test_id_without_message_id_follows_content_not_file_name(tmp_path):
+    first = tmp_path / "a"
+    second = tmp_path / "b"
+    first.mkdir()
+    second.mkdir()
+    (first / "note.eml").write_bytes(_plain_eml("A", "first message"))
+    (second / "note.eml").write_bytes(_plain_eml("B", "second message"))
+    (second / "renamed.eml").write_bytes((first / "note.eml").read_bytes())
+    a = parse_eml(first / "note.eml", first, "fixture-m1")
+    b = parse_eml(second / "note.eml", second, "fixture-m1")
+    renamed = parse_eml(second / "renamed.eml", second, "fixture-m1")
+    assert a["id"].startswith("file:")
+    assert a["id"] != b["id"]
+    assert a["id"] == renamed["id"]
+
+
+def test_oversized_file_is_skipped(tmp_path, monkeypatch):
+    import connectors.file_export as file_export
+
+    path = tmp_path / "big.eml"
+    path.write_bytes(_plain_eml("big", "x" * 200))
+    monkeypatch.setattr(file_export, "MAX_EML_BYTES", 100)
+    with pytest.raises(Exception, match="文件过大"):
+        parse_eml(path, tmp_path, "fixture-m1")

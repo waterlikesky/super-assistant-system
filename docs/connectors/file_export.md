@@ -6,6 +6,8 @@ M1 只支持这一种输入。不登录邮箱，不读微信、钉钉或短信�
 
 - 你自己从邮件客户端导出的 `.eml`
 - 只读指定目录的这一层；不进入子目录，不读点开头的隐藏文件
+- 符号链接不跟随，超过 25 MiB 的文件跳过，都会打印 skipped
+- 有 Message-ID 时 id 为 `email:<Message-ID>`；没有时按原信内容哈希，改文件名不变 id
 - 每封信变成一条 `ChannelEvent`：`channel=email`，`metadata.ingest_via=file_export`
 - 优先 `text/plain`；没有纯文本时去掉 HTML 标签
 - 单独一行 `-- `（短横、短横、空格）之后的签名会丢掉；没有这行就保留正文
