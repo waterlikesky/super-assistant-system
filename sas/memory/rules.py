@@ -42,7 +42,7 @@ REQUEST_RES = [
 BROADCAST_RE = re.compile(r"大家|各位|所有人|全体|@所有人")
 
 PREF_RE = re.compile(
-    r"我(?:最|比较|很|超|特别|一直)?(?:喜欢|爱吃|爱喝|爱看|偏好|习惯|讨厌|不喜欢|不太喜欢|不吃|不喝|吃不了|喝不了|对.{1,6}过敏).{1,20}"
+    r"我(?:最|比较|很|超|特别|一直)?(?:(?:喜欢|爱吃|爱喝|爱看|偏好|习惯|讨厌|不喜欢|不太喜欢|不吃|不喝|吃不了|喝不了).{1,20}|对.{1,6}过敏.{0,20})"
 )
 PREF_EN_RE = re.compile(r"(?i)\bI (?:really )?(?:like|love|prefer|hate|don't like|do not like)\b.{1,40}")
 FACT_RES = [

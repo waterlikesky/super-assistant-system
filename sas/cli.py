@@ -10,7 +10,7 @@ from datetime import date
 from pathlib import Path
 
 from sas import __version__
-from sas.assistant import CHANNEL_LABEL, Assistant, fmt_time, item_line, short
+from sas.assistant import CHANNEL_LABEL, Assistant, fmt_time, item_line, reply_label, short
 from sas.config import Config, ConfigError
 from sas.connectors import REGISTRY
 from sas.digest import build_digest, digest_snippets
@@ -191,7 +191,7 @@ def cmd_todos(args, config, store, a: Assistant) -> int:
     if replies:
         print(f"── 待回复（{len(replies)}）")
         for r in replies:
-            print(f"  {r['conversation']}（{CHANNEL_LABEL.get(r['channel'], '')} {fmt_time(r, True)}）：{short(r['content_text'])}")
+            print(f"  {reply_label(r)}（{CHANNEL_LABEL.get(r['channel'], '')} {fmt_time(r, True)}）：{short(r['content_text'])}")
     if not replies and not any(items for _, items in blocks):
         print("没有未完成事项。")
     print("（用 `sas done <#id>` 手动关闭一条）")

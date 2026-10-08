@@ -48,7 +48,7 @@ def build_digest(assistant: Assistant, day: str, llm_summary: str | None = None)
 
     replies = [r for r in assistant.needs_reply() if r["day"] == day]
     sections = [
-        ("待回复", [f"- {_link(r['conversation'])}（{CHANNEL_LABEL.get(r['channel'], '')} {fmt_time(r)}）：{short(r['content_text'])}" for r in replies]),
+        ("待回复", [f"- {_link(r['sender']) + '「' + r['conversation'] + '」' if r['channel'] == 'email' else _link(r['conversation'])}（{CHANNEL_LABEL.get(r['channel'], '')} {fmt_time(r)}）：{short(r['content_text'])}" for r in replies]),
         ("我答应的", [_todo(m) for m in todays if m.kind == "commitment" and m.subject == ME]),
         ("别人找我", [_todo(m) for m in created if m.kind == "request" and m.counterpart == ME]),
         ("别人答应的", [_todo(m) for m in created if m.kind == "commitment" and m.subject != ME]),

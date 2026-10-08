@@ -41,6 +41,13 @@ def short(text: str, n: int = 60) -> str:
     return text if len(text) <= n else text[: n - 1] + "…"
 
 
+def reply_label(row: dict) -> str:
+    """待回复里显示谁：邮件显示「发件人「主题」」，IM 显示会话名。"""
+    if row["channel"] == "email":
+        return f"{row['sender']}「{row['conversation']}」"
+    return row["conversation"]
+
+
 def item_line(item: MemoryItem, *, with_id: bool = True) -> str:
     who = item.subject if not item.counterpart or item.kind in {"preference", "fact"} else f"{item.subject} → {item.counterpart}"
     bits = [f"[{item.label}] {who}：{item.text}"]
@@ -223,7 +230,7 @@ class Assistant:
         hit = {k for k, r in INTENTS.items() if r.search(question)}
 
         if "reply" in hit:
-            ans.add("该回复的", [f"{r['conversation']}（{CHANNEL_LABEL.get(r['channel'], r['channel'])}，{fmt_time(r, True)}）：{short(r['content_text'])} {ans.cite(r)}" for r in self.needs_reply()])
+            ans.add("该回复的", [f"{reply_label(r)}（{CHANNEL_LABEL.get(r['channel'], r['channel'])}，{fmt_time(r, True)}）：{short(r['content_text'])} {ans.cite(r)}" for r in self.needs_reply()])
         if "promise" in hit or "todo" in hit:
             t = self.todos(person)
             if "promise" in hit:
